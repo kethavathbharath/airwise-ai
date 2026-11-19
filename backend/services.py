@@ -45,9 +45,17 @@ class AirQualityService:
     def __init__(self):
         self.settings = get_settings()
         self.headers = {"User-Agent": "AirWiseAI-Assistant/1.0 (https://airwise.app; support@airwise.app)"}
+        self._aqi_cache: Dict[str, Tuple[float, AirQualityReport]] = {}
+        self._search_cache: Dict[str, Tuple[float, List[CitySearchResult]]] = {}
+        self.CACHE_TTL = 600  # 10 minutes cache for optimal efficiency
 
     async def search_cities(self, query: str) -> List[CitySearchResult]:
-        query_clean = query.strip()
+        query_clean = query.strip().lower()
+        now = datetime.now().timestamp()
+        if query_clean in self._search_cache:
+            cache_time, cached_res = self._search_cache[query_clean]
+            if now - cache_time < self.CACHE_TTL:
+                return cached_res
         if not query_clean:
             return [CitySearchResult(**c) for c in DEFAULT_CITIES[:6]]
 
@@ -96,6 +104,13 @@ class AirQualityService:
         country: Optional[str] = "India",
         region: Optional[str] = None,
     ) -> AirQualityReport:
+        cache_key = f"{round(lat, 2)}_{round(lon, 2)}"
+        now_ts = datetime.now().timestamp()
+        if cache_key in self._aqi_cache:
+            cache_time, cached_report = self._aqi_cache[cache_key]
+            if now_ts - cache_time < self.CACHE_TTL:
+                return cached_report
+
         now_utc = datetime.now(timezone.utc)
         timestamp_iso = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -234,7 +249,7 @@ class AirQualityService:
                 co=round(curr.get("carbon_monoxide", 0), 1),
             )
 
-            return AirQualityReport(
+            report = AirQualityReport(
                 city=city_name,
                 region=region,
                 country=country,
@@ -259,9 +274,13 @@ class AirQualityService:
                 hourly_trend=hourly_trend,
                 daily_forecast=daily_forecast,
             )
+            self._aqi_cache[cache_key] = (now_ts, report)
+            return report
 
         # Fallback realistic data if API is temporarily unreachable
-        return self._generate_fallback_report(lat, lon, city_name, country, region, timestamp_iso)
+        fallback_report = self._generate_fallback_report(lat, lon, city_name, country, region, timestamp_iso)
+        self._aqi_cache[cache_key] = (now_ts, fallback_report)
+        return fallback_report
 
     def _generate_fallback_report(
         self,

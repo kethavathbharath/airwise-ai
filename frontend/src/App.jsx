@@ -27,7 +27,7 @@ function MainLayout() {
 
       {/* Severe Smog Dynamic Alert Banner */}
       {isHighPollution && (
-        <div className="bg-gradient-to-r from-rose-600 via-red-600 to-orange-600 text-white px-4 py-2.5 text-xs shadow-md">
+        <div role="alert" aria-live="polite" className="bg-gradient-to-r from-rose-600 via-red-600 to-orange-600 text-white px-4 py-2.5 text-xs shadow-md">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
             <div className="flex items-center space-x-2">
               <AlertTriangle className="w-4 h-4 text-white shrink-0 animate-bounce" />
