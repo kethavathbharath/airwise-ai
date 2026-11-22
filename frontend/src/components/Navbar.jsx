@@ -14,6 +14,8 @@ import {
   Sparkles,
   ChevronDown,
   Activity,
+  Github,
+  ExternalLink,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { searchCities } from '../services/api';
@@ -25,6 +27,7 @@ export default function Navbar() {
     currentCity,
     airQualityData,
     loadAirQuality,
+    loadByCoordinates,
     detectUserLocation,
     configStatus,
   } = useApp();
@@ -143,6 +146,24 @@ export default function Navbar() {
                       placeholder="Search city (e.g. Hyderabad, Delhi, Mumbai)..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (searchResults.length > 0) {
+                            const top = searchResults[0];
+                            if (top.latitude && top.longitude) {
+                              loadByCoordinates(top.latitude, top.longitude, top.name, top.country, top.admin1);
+                            } else {
+                              loadAirQuality(top.name);
+                            }
+                          } else if (searchQuery.trim()) {
+                            loadAirQuality(searchQuery.trim());
+                          }
+                          setIsSearching(false);
+                          setSearchQuery('');
+                          setActiveTab('dashboard');
+                        }
+                      }}
                       autoFocus
                       className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                     />
@@ -151,11 +172,13 @@ export default function Navbar() {
                   <div className="flex items-center justify-between py-1 px-1 border-b border-slate-100 text-xs text-slate-500 mb-1">
                     <span>Quick Select / GPS</span>
                     <button
+                      type="button"
                       onClick={() => {
                         detectUserLocation();
                         setIsSearching(false);
+                        setActiveTab('dashboard');
                       }}
-                      className="flex items-center space-x-1 text-emerald-600 hover:text-emerald-700 font-semibold text-[11px]"
+                      className="flex items-center space-x-1 text-emerald-600 hover:text-emerald-700 font-semibold text-[11px] cursor-pointer"
                     >
                       <MapPin className="w-3 h-3" />
                       <span>Use My GPS</span>
@@ -167,12 +190,18 @@ export default function Navbar() {
                       searchResults.map((city, idx) => (
                         <button
                           key={idx}
+                          type="button"
                           onClick={() => {
-                            loadAirQuality(city.name);
+                            if (city.latitude && city.longitude) {
+                              loadByCoordinates(city.latitude, city.longitude, city.name, city.country, city.admin1);
+                            } else {
+                              loadAirQuality(city.name);
+                            }
                             setIsSearching(false);
                             setSearchQuery('');
+                            setActiveTab('dashboard');
                           }}
-                          className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs hover:bg-emerald-50 hover:text-emerald-800 transition-colors flex items-center justify-between group"
+                          className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs hover:bg-emerald-50 hover:text-emerald-800 transition-colors flex items-center justify-between group cursor-pointer"
                         >
                           <div>
                             <span className="font-semibold text-slate-800 group-hover:text-emerald-700">
@@ -215,6 +244,32 @@ export default function Navbar() {
                 <span className="hidden sm:inline font-medium text-[11px]">{aqiInfo.category}</span>
               </div>
             )}
+
+            {/* Live App Vercel Deployment Link */}
+            <a
+              href="https://airwise-ai-nufu.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden lg:inline-flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100/80 transition-colors shadow-2xs"
+              title="Open Live Vercel Deployment"
+              aria-label="Live Vercel Web App"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Live App</span>
+              <ExternalLink className="w-3 h-3 text-emerald-600" />
+            </a>
+
+            {/* GitHub Repository Link */}
+            <a
+              href="https://github.com/kethavathbharath/airwise-ai.git"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200/70 border border-slate-200 transition-colors hidden sm:flex items-center"
+              title="GitHub: kethavathbharath/airwise-ai"
+              aria-label="GitHub Repository"
+            >
+              <Github className="w-4 h-4" />
+            </a>
 
             {/* Settings button */}
             <button

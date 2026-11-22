@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wind, Heart, Shield, Sparkles } from 'lucide-react';
+import { Wind, Heart, Shield, Sparkles, ExternalLink, Github } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export default function Footer() {
@@ -79,8 +79,30 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-2">
-          <span>&copy; {new Date().getFullYear()} AirWise AI – GenAI Urban Air Quality Assistant.</span>
+        <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <span>&copy; {new Date().getFullYear()} AirWise AI – GenAI Urban Air Quality Assistant.</span>
+            <span className="text-slate-300">•</span>
+            <a
+              href="https://airwise-ai-nufu.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-emerald-700 hover:text-emerald-800 font-semibold inline-flex items-center space-x-1"
+            >
+              <span>Live App</span>
+              <ExternalLink className="w-3 h-3 text-emerald-600" />
+            </a>
+            <span className="text-slate-300">•</span>
+            <a
+              href="https://github.com/kethavathbharath/airwise-ai.git"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-slate-700 hover:text-slate-900 font-semibold inline-flex items-center space-x-1"
+            >
+              <Github className="w-3 h-3 text-slate-600" />
+              <span>GitHub Repo</span>
+            </a>
+          </div>
           <span className="flex items-center space-x-1">
             <span>Engineered with React, Vite, FastAPI & Gemini AI</span>
           </span>

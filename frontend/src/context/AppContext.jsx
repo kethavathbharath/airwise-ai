@@ -5,6 +5,7 @@ import {
   fetchAirQualityByCoords,
   fetchConfigStatus,
   updateGeminiApiKey,
+  reverseGeocode,
 } from '../services/api';
 
 const AppContext = createContext();
@@ -215,16 +216,20 @@ export function AppProvider({ children }) {
     }
   }
 
-  async function loadByCoordinates(lat, lon, label) {
+  async function loadByCoordinates(lat, lon, label, country, region) {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchAirQualityByCoords(lat, lon, label);
+      const data = await fetchAirQualityByCoords(lat, lon, label, country, region);
       setAirQualityData(data);
       setCurrentCity(data.city);
+      return data;
     } catch (err) {
       console.warn('Coords API unreachable, using regional baseline:', err);
-      setAirQualityData(buildFallbackReport(label || 'Current Location'));
+      const fallback = buildFallbackReport(label || 'Current Location');
+      setAirQualityData(fallback);
+      setCurrentCity(fallback.city);
+      return fallback;
     } finally {
       setLoading(false);
     }
@@ -232,21 +237,52 @@ export function AppProvider({ children }) {
 
   function detectUserLocation() {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
+      alert('Geolocation is not supported by your browser. Please search for your city.');
       return;
     }
     setLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
+    setError(null);
+
+    const onPosSuccess = async (pos) => {
+      try {
         const { latitude, longitude } = pos.coords;
-        await loadByCoordinates(latitude, longitude, 'My Location');
-      },
-      (err) => {
-        console.warn('Geolocation denied or failed:', err);
+        const geo = await reverseGeocode(latitude, longitude);
+        await loadByCoordinates(latitude, longitude, geo.city, geo.country, geo.region);
+        setActiveTab('dashboard');
+      } catch (e) {
+        console.warn('Error during GPS resolution:', e);
+        try {
+          await loadByCoordinates(pos.coords.latitude, pos.coords.longitude, 'My Location', 'India', '');
+          setActiveTab('dashboard');
+        } catch (fallbackErr) {
+          await loadAirQuality('Hyderabad');
+          setActiveTab('dashboard');
+        }
+      } finally {
         setLoading(false);
-        alert('Could not access current location. Please choose your city from the search bar.');
-      },
-      { timeout: 8000 }
+      }
+    };
+
+    const onPosError = (err) => {
+      console.warn('Initial geolocation attempt failed, retrying standard accuracy:', err);
+      navigator.geolocation.getCurrentPosition(
+        onPosSuccess,
+        (fallbackErr) => {
+          setLoading(false);
+          let msg = 'Could not access GPS location. Please allow browser location access or select your city from the search bar.';
+          if (fallbackErr.code === 1) {
+            msg = 'Location permission was denied. Please allow location access in your browser or select your city from the search bar.';
+          }
+          alert(msg);
+        },
+        { timeout: 10000, enableHighAccuracy: false, maximumAge: 300000 }
+      );
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      onPosSuccess,
+      onPosError,
+      { timeout: 6000, enableHighAccuracy: true, maximumAge: 60000 }
     );
   }
 

@@ -14,6 +14,8 @@ import {
   MapPin,
   ChevronRight,
   CheckCircle2,
+  ExternalLink,
+  Github,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -65,6 +67,27 @@ export default function LandingPage() {
               <Bot className="w-4 h-4 text-emerald-600" />
               <span>Ask AirWise AI</span>
             </button>
+
+            <a
+              href="https://airwise-ai-nufu.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-5 py-3.5 rounded-xl bg-emerald-50 text-emerald-800 font-bold text-sm border border-emerald-300 hover:bg-emerald-100 transition-all flex items-center space-x-2 shadow-xs hover:scale-[1.02]"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Live Vercel App</span>
+              <ExternalLink className="w-4 h-4 text-emerald-600" />
+            </a>
+
+            <a
+              href="https://github.com/kethavathbharath/airwise-ai.git"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-3.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm border border-slate-300 hover:bg-slate-200 transition-all flex items-center space-x-2 shadow-xs hover:scale-[1.02]"
+            >
+              <Github className="w-4 h-4" />
+              <span>GitHub Code</span>
+            </a>
           </div>
 
           {/* Quick city pill selector */}
