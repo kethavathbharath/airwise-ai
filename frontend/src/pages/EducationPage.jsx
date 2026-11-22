@@ -1,12 +1,7 @@
 import React from 'react';
 import {
   BookOpen,
-  Wind,
-  ShieldCheck,
   AlertTriangle,
-  Flame,
-  Sun,
-  Activity,
   Layers,
   CheckCircle2,
   XCircle,

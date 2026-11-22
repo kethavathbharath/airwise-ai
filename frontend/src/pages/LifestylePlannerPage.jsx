@@ -5,17 +5,12 @@ import {
   Sunset,
   Moon,
   CheckCircle2,
-  AlertTriangle,
   Leaf,
   Clock,
-  ArrowRight,
-  TrendingDown,
   Bus,
   Train,
   Bike,
   Car,
-  Fuel,
-  Sparkles,
   Zap,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';

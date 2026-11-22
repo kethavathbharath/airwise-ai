@@ -8,12 +8,8 @@ import {
   ArrowRight,
   ShieldCheck,
   Sparkles,
-  Zap,
-  TrendingDown,
-  Users,
   MapPin,
   ChevronRight,
-  CheckCircle2,
   ExternalLink,
   Github,
 } from 'lucide-react';

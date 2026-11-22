@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, ShieldCheck, ShieldAlert, Info } from 'lucide-react';
+import { AlertTriangle, ShieldCheck, ShieldAlert } from 'lucide-react';
 
 const SCALE_SEGMENTS = [
   { label: 'Good', range: '0-50', color: '#10b981', min: 0, max: 50 },

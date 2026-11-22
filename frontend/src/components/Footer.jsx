@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wind, Heart, Shield, Sparkles, ExternalLink, Github } from 'lucide-react';
+import { Wind, Sparkles, ExternalLink, Github } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export default function Footer() {

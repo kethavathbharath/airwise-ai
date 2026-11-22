@@ -2,8 +2,12 @@
 Unit Tests for Central Pollution Control Board (CPCB) NAQI Calculation Engine
 """
 
-import pytest
-from backend.aqi_calculator import calculate_sub_index, calculate_india_aqi, get_category_info
+from backend.aqi_calculator import (
+    calculate_sub_index,
+    calculate_india_aqi,
+    get_category_info,
+)
+
 
 def test_pm25_breakpoints():
     # Good (0 - 30 -> 0 - 50)
@@ -29,6 +33,7 @@ def test_pm25_breakpoints():
     # Severe (250+ -> 401 - 500)
     assert calculate_sub_index(300.0, "pm2_5") >= 401
 
+
 def test_pm10_breakpoints():
     assert calculate_sub_index(25.0, "pm10") == 25
     assert calculate_sub_index(75.0, "pm10") == 75
@@ -37,19 +42,21 @@ def test_pm10_breakpoints():
     assert calculate_sub_index(390.0, "pm10") == 350
     assert calculate_sub_index(500.0, "pm10") >= 401
 
+
 def test_dominant_pollutant_identification():
     # PM2.5 is high, others are low
     pollutants = {
-        "pm2_5": 115.0, # AQI ~283 (Poor)
-        "pm10": 40.0,   # AQI 40 (Good)
-        "no2": 20.0,    # AQI 25 (Good)
+        "pm2_5": 115.0,  # AQI ~283 (Poor)
+        "pm10": 40.0,  # AQI 40 (Good)
+        "no2": 20.0,  # AQI 25 (Good)
         "o3": 30.0,
         "so2": 15.0,
-        "co": 0.5
+        "co": 0.5,
     }
     result = calculate_india_aqi(pollutants)
     assert result["category"] == "Poor"
     assert result["dominant_pollutant"] == "PM2.5"
+
 
 def test_category_info_ranges():
     assert get_category_info(30)["category"] == "Good"
@@ -58,6 +65,7 @@ def test_category_info_ranges():
     assert get_category_info(250)["category"] == "Poor"
     assert get_category_info(350)["category"] == "Very Poor"
     assert get_category_info(450)["category"] == "Severe"
+
 
 def test_null_and_negative_inputs():
     assert calculate_sub_index(-10.0, "pm2_5") is None

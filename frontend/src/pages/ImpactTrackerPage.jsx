@@ -1,18 +1,8 @@
 import React, { useState } from 'react';
 import {
   Award,
-  TrendingDown,
-  CheckCircle2,
   PlusCircle,
-  Train,
-  Bike,
-  Zap,
   Info,
-  Calendar,
-  Sparkles,
-  Lock,
-  Unlock,
-  AlertCircle,
 } from 'lucide-react';
 import {
   BarChart,

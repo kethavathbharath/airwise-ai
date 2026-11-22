@@ -10,9 +10,7 @@ import {
   Calendar,
   Clock,
   AlertCircle,
-  Sparkles,
   Bot,
-  ShieldAlert,
 } from 'lucide-react';
 import {
   AreaChart,

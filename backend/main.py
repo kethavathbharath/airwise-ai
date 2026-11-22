@@ -1,7 +1,7 @@
 import os
 import time
 from contextlib import asynccontextmanager
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict
 from fastapi import FastAPI, HTTPException, Query, Body, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -22,9 +22,11 @@ from .models import (
     UserProfile,
 )
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     yield
+
 
 settings = get_settings()
 
@@ -40,6 +42,7 @@ app = FastAPI(
 # 1. Efficiency: GZip Compression for responses > 500 bytes
 app.add_middleware(GZipMiddleware, minimum_size=500)
 
+
 # 2. Security: Custom Security Headers Middleware (OWASP recommended)
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -51,7 +54,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Permissions-Policy"] = "geolocation=(self)"
         return response
 
+
 app.add_middleware(SecurityHeadersMiddleware)
+
 
 # 3. Security: In-Memory Rate Limiting Middleware (prevents DoS on AI endpoints)
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -64,20 +69,23 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         client_ip = request.client.host if request.client else "unknown"
         now = time.time()
-        
+
         # Clean older requests
         timestamps = self.client_records.get(client_ip, [])
         timestamps = [t for t in timestamps if now - t < self.window_secs]
-        
+
         if len(timestamps) >= self.max_requests:
             return JSONResponse(
                 status_code=429,
-                content={"detail": "Too many requests. Please slow down and try again shortly."}
+                content={
+                    "detail": "Too many requests. Please slow down and try again shortly."
+                },
             )
-        
+
         timestamps.append(now)
         self.client_records[client_ip] = timestamps
         return await call_next(request)
+
 
 app.add_middleware(RateLimitMiddleware, max_requests=120, window_secs=60)
 
@@ -88,6 +96,8 @@ ALLOWED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
     "http://localhost:3000",
+    "https://airwise-ai-nufu.vercel.app",
+    "https://airwise-ai.vercel.app",
 ]
 
 app.add_middleware(
@@ -98,6 +108,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/health")
 async def health_check():
     return {
@@ -105,8 +116,11 @@ async def health_check():
         "service": "AirWise AI Backend",
         "challenge": "PromptWars Virtual - Challenge 06: Urban Air Quality Assistant",
         "gemini_active": bool(settings.gemini_api_key or os.getenv("GEMINI_API_KEY")),
-        "mode": "gemini" if (settings.gemini_api_key or os.getenv("GEMINI_API_KEY")) else "intelligent_demo",
+        "mode": "gemini"
+        if (settings.gemini_api_key or os.getenv("GEMINI_API_KEY"))
+        else "intelligent_demo",
     }
+
 
 @app.get("/api/v1/config/status")
 async def get_config_status():
@@ -114,8 +128,11 @@ async def get_config_status():
     return {
         "gemini_configured": has_gemini,
         "mode": "Live Google Gemini AI" if has_gemini else "Intelligent Demo Mode",
-        "notice": "Using live Gemini model" if has_gemini else "Running with AirWise Intelligent Fallback Model. You can enter a Gemini API key in Settings at any time.",
+        "notice": "Using live Gemini model"
+        if has_gemini
+        else "Running with AirWise Intelligent Fallback Model. You can enter a Gemini API key in Settings at any time.",
     }
+
 
 @app.post("/api/v1/config/set-gemini-key")
 async def set_gemini_key(payload: dict = Body(...)):
@@ -124,21 +141,31 @@ async def set_gemini_key(payload: dict = Body(...)):
     return {
         "success": True,
         "gemini_configured": bool(key),
-        "message": "Gemini API key updated successfully." if key else "Switched to Intelligent Demo Mode.",
+        "message": "Gemini API key updated successfully."
+        if key
+        else "Switched to Intelligent Demo Mode.",
     }
 
+
 @app.get("/api/v1/cities/search", response_model=List[CitySearchResult])
-async def search_cities(q: str = Query("", max_length=100, description="City search query")):
+async def search_cities(
+    q: str = Query("", max_length=100, description="City search query"),
+):
     # Sanitize query input
     clean_q = q.strip()[:100]
     return await air_quality_service.search_cities(clean_q)
 
+
 @app.get("/api/v1/air-quality/current", response_model=AirQualityReport)
-async def get_current_air_quality(city: str = Query("Hyderabad", max_length=100, description="City name")):
+async def get_current_air_quality(
+    city: str = Query("Hyderabad", max_length=100, description="City name"),
+):
     clean_city = city.strip()[:100]
     results = await air_quality_service.search_cities(clean_city)
     if not results:
-        raise HTTPException(status_code=404, detail=f"Location '{clean_city}' could not be resolved.")
+        raise HTTPException(
+            status_code=404, detail=f"Location '{clean_city}' could not be resolved."
+        )
     target = results[0]
     return await air_quality_service.get_air_quality(
         lat=target.latitude,
@@ -148,11 +175,14 @@ async def get_current_air_quality(city: str = Query("Hyderabad", max_length=100,
         region=target.admin1,
     )
 
+
 @app.get("/api/v1/air-quality/coords", response_model=AirQualityReport)
 async def get_air_quality_by_coords(
     lat: float = Query(..., ge=-90.0, le=90.0, description="Latitude"),
     lon: float = Query(..., ge=-180.0, le=180.0, description="Longitude"),
-    city: Optional[str] = Query("Detected Location", max_length=100, description="City or location label"),
+    city: Optional[str] = Query(
+        "Detected Location", max_length=100, description="City or location label"
+    ),
     country: Optional[str] = Query("India", max_length=100, description="Country name"),
     region: Optional[str] = Query(None, max_length=100, description="State / Region"),
 ):
@@ -164,6 +194,7 @@ async def get_air_quality_by_coords(
         region=region[:100] if region else None,
     )
 
+
 @app.post("/api/v1/ai/chat", response_model=ChatResponse)
 async def ai_chat(req: ChatRequest):
     return await ai_service.chat(
@@ -174,6 +205,7 @@ async def ai_chat(req: ChatRequest):
         user_profile=req.user_profile,
     )
 
+
 @app.post("/api/v1/ai/daily-plan", response_model=DailyPlanResponse)
 async def ai_daily_plan(payload: dict = Body(...)):
     location = payload.get("location", "Hyderabad")
@@ -181,6 +213,7 @@ async def ai_daily_plan(payload: dict = Body(...)):
     raw_profile = payload.get("user_profile")
     user_profile = UserProfile(**raw_profile) if raw_profile else None
     return ai_service.generate_daily_routine_plan(location, aqi_val, user_profile)
+
 
 @app.post("/api/v1/ai/indoor-advice", response_model=IndoorAdvisorResponse)
 async def ai_indoor_advice(req: IndoorAdvisorRequest):
@@ -192,26 +225,36 @@ async def ai_indoor_advice(req: IndoorAdvisorRequest):
         outdoor_aqi=req.outdoor_aqi,
     )
 
+
 # 5. Challenge 06 Explicit Alignment Aliases
 @app.post("/api/v1/recommendations/daily-routine", response_model=DailyPlanResponse)
 async def alias_daily_routine(payload: dict = Body(...)):
     """Challenge 06 Feature D: Low-Emission Daily Routine Planner endpoint."""
     return await ai_daily_plan(payload)
 
+
 @app.post("/api/v1/recommendations/indoor-air", response_model=IndoorAdvisorResponse)
 async def alias_indoor_air(req: IndoorAdvisorRequest):
     """Challenge 06 Feature C: Indoor Air Quality Advisor endpoint."""
     return await ai_indoor_advice(req)
+
 
 @app.get("/api/v1/air-quality/india-scale", response_model=AirQualityReport)
 async def alias_india_scale(city: str = Query("Hyderabad")):
     """Challenge 06 Feature A: CPCB India-Specific AQI Scale endpoint."""
     return await get_current_air_quality(city)
 
+
 # 6. Static files serving
-frontend_dist = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
+frontend_dist = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), "frontend", "dist"
+)
 if os.path.exists(frontend_dist):
-    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
+    app.mount(
+        "/assets",
+        StaticFiles(directory=os.path.join(frontend_dist, "assets")),
+        name="assets",
+    )
 
     @app.get("/")
     async def serve_root():
@@ -219,13 +262,20 @@ if os.path.exists(frontend_dist):
 
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
-        if full_path.startswith("api/") or full_path.startswith("health") or full_path.startswith("docs") or full_path.startswith("redoc"):
+        if (
+            full_path.startswith("api/")
+            or full_path.startswith("health")
+            or full_path.startswith("docs")
+            or full_path.startswith("redoc")
+        ):
             raise HTTPException(status_code=404, detail="Endpoint not found")
         file_path = os.path.join(frontend_dist, full_path)
         if os.path.exists(file_path) and os.path.isfile(file_path):
             return FileResponse(file_path)
         return FileResponse(os.path.join(frontend_dist, "index.html"))
 
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)

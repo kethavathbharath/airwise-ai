@@ -11,7 +11,7 @@ import LifestylePlannerPage from './pages/LifestylePlannerPage';
 import ImpactTrackerPage from './pages/ImpactTrackerPage';
 import EducationPage from './pages/EducationPage';
 import SettingsPage from './pages/SettingsPage';
-import { AlertTriangle, ArrowRight, X } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
 
 function MainLayout() {
   const { activeTab, setActiveTab, airQualityData, hasCompletedOnboarding } = useApp();

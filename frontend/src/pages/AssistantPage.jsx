@@ -4,13 +4,9 @@ import {
   Bot,
   User,
   Trash2,
-  Sparkles,
-  RefreshCw,
   Copy,
   Check,
-  ShieldAlert,
   MapPin,
-  HelpCircle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sendChatMessage } from '../services/api';

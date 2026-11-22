@@ -99,4 +99,11 @@ describe('Client-Side CPCB NAQI Engine Tests', () => {
     assert.strictEqual(emptyRes.aqi, 0);
     assert.strictEqual(emptyRes.category, 'Good');
   });
+
+  it('verifies CPCB breakpoints and 6-tier categories structure', () => {
+    assert.strictEqual(CPCB_BREAKPOINTS.pm2_5.length, 6);
+    assert.strictEqual(CPCB_CATEGORIES.length, 6);
+    assert.strictEqual(CPCB_CATEGORIES[0].category, 'Good');
+    assert.strictEqual(CPCB_CATEGORIES[5].category, 'Severe');
+  });
 });

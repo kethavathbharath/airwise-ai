@@ -2,14 +2,10 @@ import React, { useState, useEffect } from 'react';
 import {
   Home,
   Wind,
-  ShieldCheck,
-  AlertTriangle,
   Fan,
   Flame,
   Sparkles,
-  Info,
   CheckCircle2,
-  RefreshCw,
   Sliders,
   Flower2,
 } from 'lucide-react';

@@ -1,6 +1,7 @@
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
 
+
 class CitySearchResult(BaseModel):
     id: Optional[int] = None
     name: str
@@ -10,6 +11,7 @@ class CitySearchResult(BaseModel):
     admin1: Optional[str] = None
     timezone: Optional[str] = "UTC"
 
+
 class PollutantConcentrations(BaseModel):
     pm2_5: Optional[float] = Field(None, description="PM2.5 in µg/m³")
     pm10: Optional[float] = Field(None, description="PM10 in µg/m³")
@@ -18,6 +20,7 @@ class PollutantConcentrations(BaseModel):
     so2: Optional[float] = Field(None, description="Sulphur Dioxide in µg/m³")
     co: Optional[float] = Field(None, description="Carbon Monoxide in µg/m³")
 
+
 class WeatherInfo(BaseModel):
     temperature: Optional[float] = None
     humidity: Optional[float] = None
@@ -25,6 +28,7 @@ class WeatherInfo(BaseModel):
     wind_direction: Optional[float] = None
     condition: Optional[str] = "Clear"
     uv_index: Optional[float] = None
+
 
 class AQIScaleDetail(BaseModel):
     aqi: int
@@ -35,6 +39,7 @@ class AQIScaleDetail(BaseModel):
     dominant_pollutant: str
     sub_indices: Dict[str, int] = {}
 
+
 class HourlyForecastItem(BaseModel):
     time: str
     india_aqi: int
@@ -44,6 +49,7 @@ class HourlyForecastItem(BaseModel):
     category: str
     color: str
 
+
 class DailyForecastItem(BaseModel):
     date: str
     avg_aqi: int
@@ -52,6 +58,7 @@ class DailyForecastItem(BaseModel):
     category: str
     color: str
     recommendation: str
+
 
 class AirQualityReport(BaseModel):
     city: str
@@ -70,6 +77,7 @@ class AirQualityReport(BaseModel):
     hourly_trend: List[HourlyForecastItem] = []
     daily_forecast: List[DailyForecastItem] = []
 
+
 class UserProfile(BaseModel):
     name: Optional[str] = "User"
     city: Optional[str] = "Hyderabad"
@@ -81,9 +89,11 @@ class UserProfile(BaseModel):
     has_purifier: Optional[bool] = False
     ventilation_type: Optional[str] = "Natural Windows & Balcony"
 
+
 class ChatMessage(BaseModel):
-    role: str # 'user' or 'assistant' or 'system'
+    role: str  # 'user' or 'assistant' or 'system'
     content: str
+
 
 class ChatRequest(BaseModel):
     messages: List[ChatMessage]
@@ -92,11 +102,13 @@ class ChatRequest(BaseModel):
     pollutants: Optional[Dict[str, Any]] = None
     user_profile: Optional[UserProfile] = None
 
+
 class ChatResponse(BaseModel):
     reply: str
     model_used: str
-    mode: str # 'gemini' or 'intelligent_demo'
+    mode: str  # 'gemini' or 'intelligent_demo'
     suggestions: List[str] = []
+
 
 class RoutineAction(BaseModel):
     time_slot: str
@@ -104,8 +116,9 @@ class RoutineAction(BaseModel):
     action: str
     why_it_matters: str
     environmental_benefit: str
-    difficulty: str # 'Easy', 'Medium', 'Challenging'
-    category: str # 'Commute', 'Indoor', 'Energy', 'Activity'
+    difficulty: str  # 'Easy', 'Medium', 'Challenging'
+    category: str  # 'Commute', 'Indoor', 'Energy', 'Activity'
+
 
 class DailyPlanResponse(BaseModel):
     city: str
@@ -116,12 +129,14 @@ class DailyPlanResponse(BaseModel):
     evening: List[RoutineAction]
     estimated_daily_co2_reduction_kg: float
 
+
 class IndoorAdvisorRequest(BaseModel):
     home_size: str = "2 BHK"
     occupants: int = 3
     ventilation_type: str = "Natural Windows"
     has_purifier: bool = False
     outdoor_aqi: int = 150
+
 
 class IndoorAdvisorResponse(BaseModel):
     ventilation_status: str

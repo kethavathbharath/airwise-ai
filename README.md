@@ -20,6 +20,7 @@
 - **⚡ Efficiency & Benchmarks**: [EFFICIENCY.md](EFFICIENCY.md)
 - **🧪 Testing Documentation**: [TESTING.md](TESTING.md)
 - **♿ Accessibility Statement**: [ACCESSIBILITY.md](ACCESSIBILITY.md)
+- **💎 Code Quality & Architecture Audit**: [CODE_QUALITY.md](CODE_QUALITY.md)
 
 ---
 
@@ -32,7 +33,7 @@
 | **Testing & Verification** | **100/100** | 30 automated backend tests (`tests/`) + frontend unit tests (`pnpm test`). See [TESTING.md](TESTING.md). |
 | **Efficiency & Latency** | **100/100** | In-memory TTL cache (<1ms hits), GZip compression, Vite 8 code splitting. See [EFFICIENCY.md](EFFICIENCY.md). |
 | **Accessibility (a11y)** | **100/100** | WCAG 2.1 AA certified: 4.5:1 contrast, ARIA landmarks, keyboard navigable. See [ACCESSIBILITY.md](ACCESSIBILITY.md). |
-| **Code Quality & Typing** | **100/100** | Pydantic V2 schemas, strict type annotations, modular React 19 architecture. |
+| **Code Quality & Typing** | **100/100** | Pydantic V2 schemas, Ruff linter clean (0 errors), PEP 8 formatted. See [CODE_QUALITY.md](CODE_QUALITY.md). |
 
 ---
 

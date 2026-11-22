@@ -9,7 +9,6 @@ import {
   fetchLiveAirQualityDirect,
   searchCitiesDirect,
   reverseGeocode,
-  calculateIndiaAqi,
 } from './airQualityClient';
 
 const API_BASE = '/api/v1';

@@ -1,8 +1,7 @@
 import os
-import json
 import httpx
 from datetime import datetime, timezone, timedelta
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 from .config import get_settings
 from .aqi_calculator import calculate_india_aqi, get_category_info
@@ -24,27 +23,120 @@ from .models import (
 
 # Standard curated Indian & global cities for instant lookup and fallback
 DEFAULT_CITIES = [
-    {"name": "Delhi", "admin1": "Delhi", "country": "India", "latitude": 28.6139, "longitude": 77.2090},
-    {"name": "Hyderabad", "admin1": "Telangana", "country": "India", "latitude": 17.3850, "longitude": 78.4867},
-    {"name": "Mumbai", "admin1": "Maharashtra", "country": "India", "latitude": 19.0760, "longitude": 72.8777},
-    {"name": "Bengaluru", "admin1": "Karnataka", "country": "India", "latitude": 12.9716, "longitude": 77.5946},
-    {"name": "Kolkata", "admin1": "West Bengal", "country": "India", "latitude": 22.5726, "longitude": 88.3639},
-    {"name": "Chennai", "admin1": "Tamil Nadu", "country": "India", "latitude": 13.0827, "longitude": 80.2707},
-    {"name": "Pune", "admin1": "Maharashtra", "country": "India", "latitude": 18.5204, "longitude": 73.8567},
-    {"name": "Ahmedabad", "admin1": "Gujarat", "country": "India", "latitude": 23.0225, "longitude": 72.5714},
-    {"name": "Lucknow", "admin1": "Uttar Pradesh", "country": "India", "latitude": 26.8467, "longitude": 80.9462},
-    {"name": "Jaipur", "admin1": "Rajasthan", "country": "India", "latitude": 26.9124, "longitude": 75.7873},
-    {"name": "Patna", "admin1": "Bihar", "country": "India", "latitude": 25.5941, "longitude": 85.1376},
-    {"name": "Chandigarh", "admin1": "Chandigarh", "country": "India", "latitude": 30.7333, "longitude": 76.7794},
-    {"name": "New York", "admin1": "New York", "country": "United States", "latitude": 40.7128, "longitude": -74.0060},
-    {"name": "London", "admin1": "England", "country": "United Kingdom", "latitude": 51.5074, "longitude": -0.1278},
-    {"name": "Tokyo", "admin1": "Tokyo", "country": "Japan", "latitude": 35.6762, "longitude": 139.6503},
+    {
+        "name": "Delhi",
+        "admin1": "Delhi",
+        "country": "India",
+        "latitude": 28.6139,
+        "longitude": 77.2090,
+    },
+    {
+        "name": "Hyderabad",
+        "admin1": "Telangana",
+        "country": "India",
+        "latitude": 17.3850,
+        "longitude": 78.4867,
+    },
+    {
+        "name": "Mumbai",
+        "admin1": "Maharashtra",
+        "country": "India",
+        "latitude": 19.0760,
+        "longitude": 72.8777,
+    },
+    {
+        "name": "Bengaluru",
+        "admin1": "Karnataka",
+        "country": "India",
+        "latitude": 12.9716,
+        "longitude": 77.5946,
+    },
+    {
+        "name": "Kolkata",
+        "admin1": "West Bengal",
+        "country": "India",
+        "latitude": 22.5726,
+        "longitude": 88.3639,
+    },
+    {
+        "name": "Chennai",
+        "admin1": "Tamil Nadu",
+        "country": "India",
+        "latitude": 13.0827,
+        "longitude": 80.2707,
+    },
+    {
+        "name": "Pune",
+        "admin1": "Maharashtra",
+        "country": "India",
+        "latitude": 18.5204,
+        "longitude": 73.8567,
+    },
+    {
+        "name": "Ahmedabad",
+        "admin1": "Gujarat",
+        "country": "India",
+        "latitude": 23.0225,
+        "longitude": 72.5714,
+    },
+    {
+        "name": "Lucknow",
+        "admin1": "Uttar Pradesh",
+        "country": "India",
+        "latitude": 26.8467,
+        "longitude": 80.9462,
+    },
+    {
+        "name": "Jaipur",
+        "admin1": "Rajasthan",
+        "country": "India",
+        "latitude": 26.9124,
+        "longitude": 75.7873,
+    },
+    {
+        "name": "Patna",
+        "admin1": "Bihar",
+        "country": "India",
+        "latitude": 25.5941,
+        "longitude": 85.1376,
+    },
+    {
+        "name": "Chandigarh",
+        "admin1": "Chandigarh",
+        "country": "India",
+        "latitude": 30.7333,
+        "longitude": 76.7794,
+    },
+    {
+        "name": "New York",
+        "admin1": "New York",
+        "country": "United States",
+        "latitude": 40.7128,
+        "longitude": -74.0060,
+    },
+    {
+        "name": "London",
+        "admin1": "England",
+        "country": "United Kingdom",
+        "latitude": 51.5074,
+        "longitude": -0.1278,
+    },
+    {
+        "name": "Tokyo",
+        "admin1": "Tokyo",
+        "country": "Japan",
+        "latitude": 35.6762,
+        "longitude": 139.6503,
+    },
 ]
+
 
 class AirQualityService:
     def __init__(self):
         self.settings = get_settings()
-        self.headers = {"User-Agent": "AirWiseAI-Assistant/1.0 (https://airwise.app; support@airwise.app)"}
+        self.headers = {
+            "User-Agent": "AirWiseAI-Assistant/1.0 (https://airwise.app; support@airwise.app)"
+        }
         self._aqi_cache: Dict[str, Tuple[float, AirQualityReport]] = {}
         self._search_cache: Dict[str, Tuple[float, List[CitySearchResult]]] = {}
         self.CACHE_TTL = 600  # 10 minutes cache for optimal efficiency
@@ -134,7 +226,10 @@ class AirQualityService:
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
-                aq_res, w_res = await client.get(aq_url, headers=self.headers), await client.get(weather_url, headers=self.headers)
+                aq_res, w_res = (
+                    await client.get(aq_url, headers=self.headers),
+                    await client.get(weather_url, headers=self.headers),
+                )
                 if aq_res.status_code == 200:
                     aq_json = aq_res.json()
                     live_data_fetched = True
@@ -185,8 +280,12 @@ class AirQualityService:
                         time=times[i],
                         india_aqi=item_cpcb["aqi"],
                         us_aqi=h_us[i] if i < len(h_us) else None,
-                        pm2_5=round(p_item["pm2_5"], 1) if p_item["pm2_5"] is not None else None,
-                        pm10=round(p_item["pm10"], 1) if p_item["pm10"] is not None else None,
+                        pm2_5=round(p_item["pm2_5"], 1)
+                        if p_item["pm2_5"] is not None
+                        else None,
+                        pm10=round(p_item["pm10"], 1)
+                        if p_item["pm10"] is not None
+                        else None,
                         category=item_cpcb["category"],
                         color=item_cpcb["color"],
                     )
@@ -237,7 +336,9 @@ class AirQualityService:
                 humidity=w_curr.get("relative_humidity_2m"),
                 wind_speed=w_curr.get("wind_speed_10m"),
                 wind_direction=w_curr.get("wind_direction_10m"),
-                condition="Smoggy / Hazy" if cpcb_result["aqi"] > 150 else "Clear / Mild",
+                condition="Smoggy / Hazy"
+                if cpcb_result["aqi"] > 150
+                else "Clear / Mild",
             )
 
             pollutants_obj = PollutantConcentrations(
@@ -278,7 +379,9 @@ class AirQualityService:
             return report
 
         # Fallback realistic data if API is temporarily unreachable
-        fallback_report = self._generate_fallback_report(lat, lon, city_name, country, region, timestamp_iso)
+        fallback_report = self._generate_fallback_report(
+            lat, lon, city_name, country, region, timestamp_iso
+        )
         self._aqi_cache[cache_key] = (now_ts, fallback_report)
         return fallback_report
 
@@ -299,14 +402,23 @@ class AirQualityService:
         so2 = 14.2
         co = 680.0
 
-        p_dict = {"pm2_5": pm25, "pm10": pm10, "no2": no2, "o3": o3, "so2": so2, "co": co}
+        p_dict = {
+            "pm2_5": pm25,
+            "pm10": pm10,
+            "no2": no2,
+            "o3": o3,
+            "so2": so2,
+            "co": co,
+        }
         cpcb = calculate_india_aqi(p_dict)
 
         now = datetime.now()
         hourly = []
         for h in range(24):
             t = (now + timedelta(hours=h)).strftime("%Y-%m-%dT%H:00")
-            h_pm25 = round(pm25 + 15 * (1 if 6 <= (now.hour + h) % 24 <= 10 else -0.8), 1)
+            h_pm25 = round(
+                pm25 + 15 * (1 if 6 <= (now.hour + h) % 24 <= 10 else -0.8), 1
+            )
             h_p = {"pm2_5": h_pm25, "pm10": pm10}
             c = calculate_india_aqi(h_p)
             hourly.append(
@@ -407,7 +519,9 @@ class AIService:
                 gemini_contents = []
                 for m in messages[-5:]:
                     role = "user" if m.role == "user" else "model"
-                    gemini_contents.append({"role": role, "parts": [{"text": m.content}]})
+                    gemini_contents.append(
+                        {"role": role, "parts": [{"text": m.content}]}
+                    )
 
                 gemini_payload = {
                     "contents": gemini_contents,
@@ -420,19 +534,25 @@ class AIService:
                     resp = await client.post(url, json=gemini_payload)
                     if resp.status_code == 200:
                         data = resp.json()
-                        reply_text = data["candidates"][0]["content"]["parts"][0]["text"]
+                        reply_text = data["candidates"][0]["content"]["parts"][0][
+                            "text"
+                        ]
                         return ChatResponse(
                             reply=reply_text,
                             model_used="Gemini 2.0 Flash",
                             mode="gemini",
-                            suggestions=self._generate_relevant_followups(user_last_msg, current_aqi),
+                            suggestions=self._generate_relevant_followups(
+                                user_last_msg, current_aqi
+                            ),
                         )
-            except Exception as e:
+            except Exception:
                 # If Gemini fails, gracefully fallback to high-fidelity AI engine
                 pass
 
         # Intelligent Fallback AI Engine (Zero-latency, domain-expert response generator)
-        reply = self._intelligent_ai_response(user_last_msg, location, current_aqi, pollutants, user_profile)
+        reply = self._intelligent_ai_response(
+            user_last_msg, location, current_aqi, pollutants, user_profile
+        )
         return ChatResponse(
             reply=reply,
             model_used="AirWise Expert Neural Assistant",
@@ -452,11 +572,15 @@ class AIService:
         loc = location or "your area"
         aqi = current_aqi or 168
         cat = get_category_info(aqi)["category"]
-        transit = user_profile.transport_method if user_profile else "bike / two-wheeler"
+        transit = (
+            user_profile.transport_method if user_profile else "bike / two-wheeler"
+        )
         lifestyle = user_profile.lifestyle if user_profile else "student / commuter"
 
         # Check prompt example case: Bike commute to college / work in severe/poor pollution
-        if any(w in q for w in ["bike", "travel", "commute", "college", "work", "office"]) and any(w in q for w in ["severe", "pollution", "safe", "what should i do"]):
+        if any(
+            w in q for w in ["bike", "travel", "commute", "college", "work", "office"]
+        ) and any(w in q for w in ["severe", "pollution", "safe", "what should i do"]):
             return (
                 f"### 📍 Personalized Advisory for {loc} (Current AQI: {aqi} – {cat})\n\n"
                 f"As someone traveling by **{transit}** as a **{lifestyle}**, riding in {cat.lower()} air exposes your lungs to direct particulate matter and vehicular tailpipe emissions. Here is your targeted plan:\n\n"
@@ -544,7 +668,9 @@ class AIService:
             "Feel free to ask me anything specific about your commute, indoor air setup, or eco-friendly routines!"
         )
 
-    def _generate_relevant_followups(self, last_msg: str, aqi: Optional[int]) -> List[str]:
+    def _generate_relevant_followups(
+        self, last_msg: str, aqi: Optional[int]
+    ) -> List[str]:
         return [
             "What should I do today?",
             "Is it safe to exercise outside?",
@@ -649,18 +775,19 @@ class AIService:
         cat = get_category_info(outdoor_aqi)["category"]
 
         if outdoor_aqi > 200:
-            vent_status = "Keep Windows Closed (Hazardous Ambient Air)"
+            vent_status = f"Keep Windows Closed ({cat} Ambient Air)"
             vent_timing = "Only open windows for 10 minutes between 1:00 PM - 2:30 PM if indoor CO2 feels stuffy."
         elif outdoor_aqi > 100:
-            vent_status = "Selective Timed Ventilation"
+            vent_status = f"Selective Timed Ventilation ({cat} Air)"
             vent_timing = "Open windows between 12:00 PM and 3:30 PM. Keep closed during morning and evening rush hours."
         else:
-            vent_status = "Natural Air Flow Recommended"
+            vent_status = f"Natural Air Flow Recommended ({cat} Air)"
             vent_timing = "Safe for cross-ventilation throughout the day."
 
         purifier_advice = {
             "needed": outdoor_aqi > 120 or not has_purifier,
-            "recommended_cadr_m3h": occupants * 80 + (250 if "3 BHK" in home_size else 180),
+            "recommended_cadr_m3h": occupants * 80
+            + (250 if "3 BHK" in home_size else 180),
             "room_placement": "Center of main living or bedroom, at least 20-30 cm away from walls and curtains.",
             "operational_mode": "Run on Medium speed continuously in bedrooms; use Auto/High mode during cooking hours.",
             "diy_alternative": "A 20-inch box fan with a taped MERV-13 filter achieves up to 80% filtration efficiency at 20% of commercial purifier cost.",
@@ -688,7 +815,12 @@ class AIService:
                 "In a typical home with natural air exchange, you would need over 10-100 plants per square meter to replicate the PM2.5 filtration of a single basic HEPA air purifier. "
                 "Enjoy plants for biophilic stress relief, but rely on mechanical HEPA filters for smog."
             ),
-            "suitable_plants": ["Snake Plant (Sansevieria)", "Areca Palm", "Spider Plant", "Peace Lily"],
+            "suitable_plants": [
+                "Snake Plant (Sansevieria)",
+                "Areca Palm",
+                "Spider Plant",
+                "Peace Lily",
+            ],
         }
 
         filter_maintenance = [

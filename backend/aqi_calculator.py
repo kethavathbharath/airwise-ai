@@ -3,7 +3,7 @@ Indian Central Pollution Control Board (CPCB) NAQI & US EPA AQI Calculator.
 Provides precise calculation of sub-indices, dominant pollutants, categories, and health advisories.
 """
 
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional
 
 # CPCB Breakpoints (Min_Conc, Max_Conc, Min_AQI, Max_AQI)
 CPCB_BREAKPOINTS = {
@@ -58,13 +58,50 @@ CPCB_BREAKPOINTS = {
 }
 
 CPCB_CATEGORIES = [
-    {"max": 50, "category": "Good", "color": "#10b981", "badgeClass": "bg-emerald-100 text-emerald-800 border-emerald-300", "description": "Minimal health impact. Clean & safe ambient air."},
-    {"max": 100, "category": "Satisfactory", "color": "#84cc16", "badgeClass": "bg-lime-100 text-lime-800 border-lime-300", "description": "Minor breathing discomfort to sensitive people."},
-    {"max": 200, "category": "Moderate", "color": "#eab308", "badgeClass": "bg-amber-100 text-amber-800 border-amber-300", "description": "Breathing discomfort to people with asthma, lungs and heart diseases."},
-    {"max": 300, "category": "Poor", "color": "#f97316", "badgeClass": "bg-orange-100 text-orange-800 border-orange-300", "description": "Breathing discomfort to most people on prolonged outdoor exposure."},
-    {"max": 400, "category": "Very Poor", "color": "#ef4444", "badgeClass": "bg-red-100 text-red-800 border-red-300", "description": "Respiratory illness on prolonged exposure. Protect children & elderly."},
-    {"max": 9999, "category": "Severe", "color": "#881337", "badgeClass": "bg-rose-950 text-rose-200 border-rose-800", "description": "Affects healthy people and seriously impacts vulnerable groups. Avoid going outside."},
+    {
+        "max": 50,
+        "category": "Good",
+        "color": "#10b981",
+        "badgeClass": "bg-emerald-100 text-emerald-800 border-emerald-300",
+        "description": "Minimal health impact. Clean & safe ambient air.",
+    },
+    {
+        "max": 100,
+        "category": "Satisfactory",
+        "color": "#84cc16",
+        "badgeClass": "bg-lime-100 text-lime-800 border-lime-300",
+        "description": "Minor breathing discomfort to sensitive people.",
+    },
+    {
+        "max": 200,
+        "category": "Moderate",
+        "color": "#eab308",
+        "badgeClass": "bg-amber-100 text-amber-800 border-amber-300",
+        "description": "Breathing discomfort to people with asthma, lungs and heart diseases.",
+    },
+    {
+        "max": 300,
+        "category": "Poor",
+        "color": "#f97316",
+        "badgeClass": "bg-orange-100 text-orange-800 border-orange-300",
+        "description": "Breathing discomfort to most people on prolonged outdoor exposure.",
+    },
+    {
+        "max": 400,
+        "category": "Very Poor",
+        "color": "#ef4444",
+        "badgeClass": "bg-red-100 text-red-800 border-red-300",
+        "description": "Respiratory illness on prolonged exposure. Protect children & elderly.",
+    },
+    {
+        "max": 9999,
+        "category": "Severe",
+        "color": "#881337",
+        "badgeClass": "bg-rose-950 text-rose-200 border-rose-800",
+        "description": "Affects healthy people and seriously impacts vulnerable groups. Avoid going outside.",
+    },
 ]
+
 
 def calculate_sub_index(conc: float, pollutant: str) -> Optional[int]:
     """Calculate the Indian AQI sub-index for a specific pollutant."""
@@ -85,11 +122,13 @@ def calculate_sub_index(conc: float, pollutant: str) -> Optional[int]:
             return round(index)
     return None
 
+
 def get_category_info(aqi_val: int) -> Dict[str, Any]:
     for cat in CPCB_CATEGORIES:
         if aqi_val <= cat["max"]:
             return cat
     return CPCB_CATEGORIES[-1]
+
 
 def calculate_india_aqi(pollutants: Dict[str, Optional[float]]) -> Dict[str, Any]:
     """
@@ -139,7 +178,7 @@ def calculate_india_aqi(pollutants: Dict[str, Optional[float]]) -> Dict[str, Any
             "badgeClass": "bg-emerald-100 text-emerald-800 border-emerald-300",
             "dominant_pollutant": "pm2_5",
             "description": "Clean air",
-            "sub_indices": {}
+            "sub_indices": {},
         }
 
     dominant_pollutant = max(sub_indices, key=sub_indices.get)
@@ -153,5 +192,5 @@ def calculate_india_aqi(pollutants: Dict[str, Optional[float]]) -> Dict[str, Any
         "badgeClass": cat_info["badgeClass"],
         "dominant_pollutant": dominant_pollutant.replace("_", ".").upper(),
         "description": cat_info["description"],
-        "sub_indices": sub_indices
+        "sub_indices": sub_indices,
     }

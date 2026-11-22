@@ -1,5 +1,4 @@
 import React from 'react';
-import { HelpCircle } from 'lucide-react';
 
 const POLLUTANT_CONFIGS = {
   pm2_5: {
