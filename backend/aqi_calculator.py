@@ -104,7 +104,15 @@ CPCB_CATEGORIES = [
 
 
 def calculate_sub_index(conc: float, pollutant: str) -> Optional[int]:
-    """Calculate the Indian AQI sub-index for a specific pollutant."""
+    """Calculate the Indian AQI sub-index for a specific pollutant.
+
+    Args:
+        conc: Real-time concentration in µg/m³ (or mg/m³ for CO).
+        pollutant: Pollutant identifier string ('pm2_5', 'pm10', 'no2', 'o3', 'so2', 'co').
+
+    Returns:
+        Calculated integer sub-index score (0 to 500+), or None if invalid.
+    """
     if conc is None or conc < 0:
         return None
     breakpoints = CPCB_BREAKPOINTS.get(pollutant)
@@ -124,6 +132,14 @@ def calculate_sub_index(conc: float, pollutant: str) -> Optional[int]:
 
 
 def get_category_info(aqi_val: int) -> Dict[str, Any]:
+    """Retrieve CPCB classification category metadata, color token, and health description.
+
+    Args:
+        aqi_val: Overall numeric Indian AQI index score.
+
+    Returns:
+        Dictionary containing category name, hex color, badge class, and health description.
+    """
     for cat in CPCB_CATEGORIES:
         if aqi_val <= cat["max"]:
             return cat
@@ -131,9 +147,17 @@ def get_category_info(aqi_val: int) -> Dict[str, Any]:
 
 
 def calculate_india_aqi(pollutants: Dict[str, Optional[float]]) -> Dict[str, Any]:
-    """
-    Computes Indian CPCB NAQI given pollutants:
-    pm2_5 (ug/m3), pm10 (ug/m3), no2 (ug/m3), o3 (ug/m3), so2 (ug/m3), co (ug/m3 or mg/m3).
+    """Compute official Indian Central Pollution Control Board (CPCB) NAQI.
+
+    Evaluates PM2.5, PM10, NO2, O3, SO2, and CO sub-indices, identifies the dominant
+    pollutant, and determines the overall category classification tier.
+
+    Args:
+        pollutants: Mapping of pollutant identifiers to observed numeric concentrations.
+
+    Returns:
+        Dictionary containing overall AQI, category, color, dominant pollutant, description,
+        and individual sub-index breakdowns.
     """
     sub_indices: Dict[str, int] = {}
 

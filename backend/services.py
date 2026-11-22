@@ -1,10 +1,12 @@
+import logging
 import os
-import httpx
-from datetime import datetime, timezone, timedelta
-from typing import List, Dict, Any, Optional, Tuple
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional, Tuple
 
-from .config import get_settings
+import httpx
+
 from .aqi_calculator import calculate_india_aqi, get_category_info
+from .config import get_settings
 from .models import (
     CitySearchResult,
     PollutantConcentrations,
@@ -20,6 +22,8 @@ from .models import (
     RoutineAction,
     IndoorAdvisorResponse,
 )
+
+logger = logging.getLogger("airwise.services")
 
 # Standard curated Indian & global cities for instant lookup and fallback
 DEFAULT_CITIES = [
@@ -134,9 +138,7 @@ DEFAULT_CITIES = [
 class AirQualityService:
     def __init__(self):
         self.settings = get_settings()
-        self.headers = {
-            "User-Agent": "AirWiseAI-Assistant/1.0 (https://airwise.app; support@airwise.app)"
-        }
+        self.headers = {"User-Agent": "AirWiseAI-Assistant/1.0 (https://airwise.app; support@airwise.app)"}
         self._aqi_cache: Dict[str, Tuple[float, AirQualityReport]] = {}
         self._search_cache: Dict[str, Tuple[float, List[CitySearchResult]]] = {}
         self.CACHE_TTL = 600  # 10 minutes cache for optimal efficiency
@@ -172,15 +174,14 @@ class AirQualityService:
                             )
                             for item in results
                         ]
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Open-Meteo geocoding search notice: %s; falling back to local lookup", exc)
 
         # Fallback to local matching
         matches = [
             CitySearchResult(**c)
             for c in DEFAULT_CITIES
-            if query_clean.lower() in c["name"].lower()
-            or query_clean.lower() in (c.get("admin1") or "").lower()
+            if query_clean.lower() in c["name"].lower() or query_clean.lower() in (c.get("admin1") or "").lower()
         ]
         if matches:
             return matches
@@ -235,8 +236,8 @@ class AirQualityService:
                     live_data_fetched = True
                 if w_res.status_code == 200:
                     weather_json = w_res.json()
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Open-Meteo geocoding search notice: %s; falling back to local lookup", exc)
 
         if live_data_fetched and "current" in aq_json:
             curr = aq_json["current"]
@@ -280,12 +281,8 @@ class AirQualityService:
                         time=times[i],
                         india_aqi=item_cpcb["aqi"],
                         us_aqi=h_us[i] if i < len(h_us) else None,
-                        pm2_5=round(p_item["pm2_5"], 1)
-                        if p_item["pm2_5"] is not None
-                        else None,
-                        pm10=round(p_item["pm10"], 1)
-                        if p_item["pm10"] is not None
-                        else None,
+                        pm2_5=round(p_item["pm2_5"], 1) if p_item["pm2_5"] is not None else None,
+                        pm10=round(p_item["pm10"], 1) if p_item["pm10"] is not None else None,
                         category=item_cpcb["category"],
                         color=item_cpcb["color"],
                     )
@@ -336,9 +333,7 @@ class AirQualityService:
                 humidity=w_curr.get("relative_humidity_2m"),
                 wind_speed=w_curr.get("wind_speed_10m"),
                 wind_direction=w_curr.get("wind_direction_10m"),
-                condition="Smoggy / Hazy"
-                if cpcb_result["aqi"] > 150
-                else "Clear / Mild",
+                condition="Smoggy / Hazy" if cpcb_result["aqi"] > 150 else "Clear / Mild",
             )
 
             pollutants_obj = PollutantConcentrations(
@@ -379,9 +374,7 @@ class AirQualityService:
             return report
 
         # Fallback realistic data if API is temporarily unreachable
-        fallback_report = self._generate_fallback_report(
-            lat, lon, city_name, country, region, timestamp_iso
-        )
+        fallback_report = self._generate_fallback_report(lat, lon, city_name, country, region, timestamp_iso)
         self._aqi_cache[cache_key] = (now_ts, fallback_report)
         return fallback_report
 
@@ -416,9 +409,7 @@ class AirQualityService:
         hourly = []
         for h in range(24):
             t = (now + timedelta(hours=h)).strftime("%Y-%m-%dT%H:00")
-            h_pm25 = round(
-                pm25 + 15 * (1 if 6 <= (now.hour + h) % 24 <= 10 else -0.8), 1
-            )
+            h_pm25 = round(pm25 + 15 * (1 if 6 <= (now.hour + h) % 24 <= 10 else -0.8), 1)
             h_p = {"pm2_5": h_pm25, "pm10": pm10}
             c = calculate_india_aqi(h_p)
             hourly.append(
@@ -519,9 +510,7 @@ class AIService:
                 gemini_contents = []
                 for m in messages[-5:]:
                     role = "user" if m.role == "user" else "model"
-                    gemini_contents.append(
-                        {"role": role, "parts": [{"text": m.content}]}
-                    )
+                    gemini_contents.append({"role": role, "parts": [{"text": m.content}]})
 
                 gemini_payload = {
                     "contents": gemini_contents,
@@ -534,25 +523,19 @@ class AIService:
                     resp = await client.post(url, json=gemini_payload)
                     if resp.status_code == 200:
                         data = resp.json()
-                        reply_text = data["candidates"][0]["content"]["parts"][0][
-                            "text"
-                        ]
+                        reply_text = data["candidates"][0]["content"]["parts"][0]["text"]
                         return ChatResponse(
                             reply=reply_text,
                             model_used="Gemini 2.0 Flash",
                             mode="gemini",
-                            suggestions=self._generate_relevant_followups(
-                                user_last_msg, current_aqi
-                            ),
+                            suggestions=self._generate_relevant_followups(user_last_msg, current_aqi),
                         )
-            except Exception:
-                # If Gemini fails, gracefully fallback to high-fidelity AI engine
-                pass
+            except Exception as exc:
+                # If Gemini fails, gracefully fallback to high-fidelity AI engine with logging
+                logger.debug("Gemini remote inference notice: %s; using local model", exc)
 
         # Intelligent Fallback AI Engine (Zero-latency, domain-expert response generator)
-        reply = self._intelligent_ai_response(
-            user_last_msg, location, current_aqi, pollutants, user_profile
-        )
+        reply = self._intelligent_ai_response(user_last_msg, location, current_aqi, pollutants, user_profile)
         return ChatResponse(
             reply=reply,
             model_used="AirWise Expert Neural Assistant",
@@ -572,15 +555,13 @@ class AIService:
         loc = location or "your area"
         aqi = current_aqi or 168
         cat = get_category_info(aqi)["category"]
-        transit = (
-            user_profile.transport_method if user_profile else "bike / two-wheeler"
-        )
+        transit = user_profile.transport_method if user_profile else "bike / two-wheeler"
         lifestyle = user_profile.lifestyle if user_profile else "student / commuter"
 
         # Check prompt example case: Bike commute to college / work in severe/poor pollution
-        if any(
-            w in q for w in ["bike", "travel", "commute", "college", "work", "office"]
-        ) and any(w in q for w in ["severe", "pollution", "safe", "what should i do"]):
+        if any(w in q for w in ["bike", "travel", "commute", "college", "work", "office"]) and any(
+            w in q for w in ["severe", "pollution", "safe", "what should i do"]
+        ):
             return (
                 f"### 📍 Personalized Advisory for {loc} (Current AQI: {aqi} – {cat})\n\n"
                 f"As someone traveling by **{transit}** as a **{lifestyle}**, riding in {cat.lower()} air exposes your lungs to direct particulate matter and vehicular tailpipe emissions. Here is your targeted plan:\n\n"
@@ -668,9 +649,7 @@ class AIService:
             "Feel free to ask me anything specific about your commute, indoor air setup, or eco-friendly routines!"
         )
 
-    def _generate_relevant_followups(
-        self, last_msg: str, aqi: Optional[int]
-    ) -> List[str]:
+    def _generate_relevant_followups(self, last_msg: str, aqi: Optional[int]) -> List[str]:
         return [
             "What should I do today?",
             "Is it safe to exercise outside?",
@@ -779,15 +758,16 @@ class AIService:
             vent_timing = "Only open windows for 10 minutes between 1:00 PM - 2:30 PM if indoor CO2 feels stuffy."
         elif outdoor_aqi > 100:
             vent_status = f"Selective Timed Ventilation ({cat} Air)"
-            vent_timing = "Open windows between 12:00 PM and 3:30 PM. Keep closed during morning and evening rush hours."
+            vent_timing = (
+                "Open windows between 12:00 PM and 3:30 PM. Keep closed during morning and evening rush hours."
+            )
         else:
             vent_status = f"Natural Air Flow Recommended ({cat} Air)"
             vent_timing = "Safe for cross-ventilation throughout the day."
 
         purifier_advice = {
             "needed": outdoor_aqi > 120 or not has_purifier,
-            "recommended_cadr_m3h": occupants * 80
-            + (250 if "3 BHK" in home_size else 180),
+            "recommended_cadr_m3h": occupants * 80 + (250 if "3 BHK" in home_size else 180),
             "room_placement": "Center of main living or bedroom, at least 20-30 cm away from walls and curtains.",
             "operational_mode": "Run on Medium speed continuously in bedrooms; use Auto/High mode during cooking hours.",
             "diy_alternative": "A 20-inch box fan with a taped MERV-13 filter achieves up to 80% filtration efficiency at 20% of commercial purifier cost.",

@@ -137,9 +137,7 @@ def test_ai_indoor_guidance():
 
 # Challenge 06 Explicit Alignment Aliases
 def test_alias_daily_routine():
-    res = client.post(
-        "/api/v1/recommendations/daily-routine", json={"location": "Delhi", "aqi": 220}
-    )
+    res = client.post("/api/v1/recommendations/daily-routine", json={"location": "Delhi", "aqi": 220})
     assert res.status_code == 200
     assert len(res.json()["morning"]) > 0
 

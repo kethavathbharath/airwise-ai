@@ -65,6 +65,12 @@ export const CPCB_CATEGORIES = [
   { max: 9999, category: 'Severe', color: '#881337', badgeClass: 'bg-rose-950 text-rose-200 border-rose-800', description: 'Affects healthy people and seriously impacts vulnerable groups. Avoid going outside.' },
 ];
 
+/**
+ * Calculates official Indian CPCB NAQI sub-index for a single atmospheric pollutant.
+ * @param {number|null|undefined} conc - Pollutant concentration (µg/m³, or mg/m³ for CO).
+ * @param {string} pollutant - Pollutant key ('pm2_5', 'pm10', 'no2', 'o3', 'so2', 'co').
+ * @returns {number|null} Interpolated integer sub-index score (0-500+), or null if invalid.
+ */
 export function calculateSubIndex(conc, pollutant) {
   if (conc === null || conc === undefined || isNaN(conc) || conc < 0) return null;
   const breakpoints = CPCB_BREAKPOINTS[pollutant];
@@ -84,6 +90,11 @@ export function calculateSubIndex(conc, pollutant) {
   return null;
 }
 
+/**
+ * Returns CPCB tier metadata, badge styles, and health advisory description.
+ * @param {number} aqiVal - Overall CPCB AQI value.
+ * @returns {object} Category metadata object.
+ */
 export function getCategoryInfo(aqiVal) {
   for (const cat of CPCB_CATEGORIES) {
     if (aqiVal <= cat.max) return cat;
@@ -91,6 +102,11 @@ export function getCategoryInfo(aqiVal) {
   return CPCB_CATEGORIES[CPCB_CATEGORIES.length - 1];
 }
 
+/**
+ * Computes official Indian National Air Quality Index across all six priority pollutants.
+ * @param {object} pollutants - Concentration dictionary for pm2_5, pm10, no2, o3, so2, co.
+ * @returns {object} Aggregated AQI result with dominant pollutant and sub-indices.
+ */
 export function calculateIndiaAqi(pollutants) {
   const subIndices = {};
 

@@ -45,6 +45,8 @@ app.add_middleware(GZipMiddleware, minimum_size=500)
 
 # 2. Security: Custom Security Headers Middleware (OWASP recommended)
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Enforces OWASP recommended security headers on all outbound HTTP responses."""
+
     async def dispatch(self, request: Request, call_next):
         response: Response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
@@ -60,6 +62,8 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 # 3. Security: In-Memory Rate Limiting Middleware (prevents DoS on AI endpoints)
 class RateLimitMiddleware(BaseHTTPMiddleware):
+    """Sliding window in-memory rate limiter to mitigate DoS abuse against inference endpoints."""
+
     def __init__(self, app, max_requests: int = 120, window_secs: int = 60):
         super().__init__(app)
         self.max_requests = max_requests
@@ -77,9 +81,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if len(timestamps) >= self.max_requests:
             return JSONResponse(
                 status_code=429,
-                content={
-                    "detail": "Too many requests. Please slow down and try again shortly."
-                },
+                content={"detail": "Too many requests. Please slow down and try again shortly."},
             )
 
         timestamps.append(now)
@@ -111,19 +113,19 @@ app.add_middleware(
 
 @app.get("/health")
 async def health_check():
+    """Service liveness probe and hackathon challenge metadata endpoint."""
     return {
         "status": "healthy",
         "service": "AirWise AI Backend",
         "challenge": "PromptWars Virtual - Challenge 06: Urban Air Quality Assistant",
         "gemini_active": bool(settings.gemini_api_key or os.getenv("GEMINI_API_KEY")),
-        "mode": "gemini"
-        if (settings.gemini_api_key or os.getenv("GEMINI_API_KEY"))
-        else "intelligent_demo",
+        "mode": "gemini" if (settings.gemini_api_key or os.getenv("GEMINI_API_KEY")) else "intelligent_demo",
     }
 
 
 @app.get("/api/v1/config/status")
 async def get_config_status():
+    """Retrieve operational status of Google Gemini GenAI service."""
     has_gemini = bool(settings.gemini_api_key or os.getenv("GEMINI_API_KEY"))
     return {
         "gemini_configured": has_gemini,
@@ -136,14 +138,13 @@ async def get_config_status():
 
 @app.post("/api/v1/config/set-gemini-key")
 async def set_gemini_key(payload: dict = Body(...)):
+    """Configure or update the active Google Gemini API key dynamically."""
     key = payload.get("key", "").strip()
     update_gemini_key(key)
     return {
         "success": True,
         "gemini_configured": bool(key),
-        "message": "Gemini API key updated successfully."
-        if key
-        else "Switched to Intelligent Demo Mode.",
+        "message": "Gemini API key updated successfully." if key else "Switched to Intelligent Demo Mode.",
     }
 
 
@@ -151,6 +152,7 @@ async def set_gemini_key(payload: dict = Body(...)):
 async def search_cities(
     q: str = Query("", max_length=100, description="City search query"),
 ):
+    """Search for Indian and global municipalities using geocoding."""
     # Sanitize query input
     clean_q = q.strip()[:100]
     return await air_quality_service.search_cities(clean_q)
@@ -160,12 +162,11 @@ async def search_cities(
 async def get_current_air_quality(
     city: str = Query("Hyderabad", max_length=100, description="City name"),
 ):
+    """Retrieve live atmospheric report and official CPCB AQI by municipality name."""
     clean_city = city.strip()[:100]
     results = await air_quality_service.search_cities(clean_city)
     if not results:
-        raise HTTPException(
-            status_code=404, detail=f"Location '{clean_city}' could not be resolved."
-        )
+        raise HTTPException(status_code=404, detail=f"Location '{clean_city}' could not be resolved.")
     target = results[0]
     return await air_quality_service.get_air_quality(
         lat=target.latitude,
@@ -180,12 +181,11 @@ async def get_current_air_quality(
 async def get_air_quality_by_coords(
     lat: float = Query(..., ge=-90.0, le=90.0, description="Latitude"),
     lon: float = Query(..., ge=-180.0, le=180.0, description="Longitude"),
-    city: Optional[str] = Query(
-        "Detected Location", max_length=100, description="City or location label"
-    ),
+    city: Optional[str] = Query("Detected Location", max_length=100, description="City or location label"),
     country: Optional[str] = Query("India", max_length=100, description="Country name"),
     region: Optional[str] = Query(None, max_length=100, description="State / Region"),
 ):
+    """Retrieve live atmospheric metrics and CPCB AQI by geographic coordinates."""
     return await air_quality_service.get_air_quality(
         lat=lat,
         lon=lon,
@@ -197,6 +197,7 @@ async def get_air_quality_by_coords(
 
 @app.post("/api/v1/ai/chat", response_model=ChatResponse)
 async def ai_chat(req: ChatRequest):
+    """Conversational GenAI air assistant for personalized urban commute advice."""
     return await ai_service.chat(
         messages=req.messages,
         location=req.location,
@@ -208,6 +209,7 @@ async def ai_chat(req: ChatRequest):
 
 @app.post("/api/v1/ai/daily-plan", response_model=DailyPlanResponse)
 async def ai_daily_plan(payload: dict = Body(...)):
+    """Synthesize a personalized, low-emission daily routine for morning, afternoon, and evening."""
     location = payload.get("location", "Hyderabad")
     aqi_val = payload.get("aqi", 165)
     raw_profile = payload.get("user_profile")
@@ -217,6 +219,7 @@ async def ai_daily_plan(payload: dict = Body(...)):
 
 @app.post("/api/v1/ai/indoor-advice", response_model=IndoorAdvisorResponse)
 async def ai_indoor_advice(req: IndoorAdvisorRequest):
+    """Generate indoor air safety guidance, window aeration schedule, and CADR purifier sizing."""
     return ai_service.generate_indoor_guidance(
         home_size=req.home_size,
         occupants=req.occupants,
@@ -246,9 +249,7 @@ async def alias_india_scale(city: str = Query("Hyderabad")):
 
 
 # 6. Static files serving
-frontend_dist = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)), "frontend", "dist"
-)
+frontend_dist = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
 if os.path.exists(frontend_dist):
     app.mount(
         "/assets",
