@@ -3,6 +3,7 @@ Vercel Serverless Function Entrypoint for AirWise AI FastAPI application.
 """
 import sys
 import os
+from fastapi import FastAPI
 
 # Add root directory to sys.path so 'backend' package imports work cleanly
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -37,5 +37,5 @@ quote-style = "double"
 indent-style = "space"
 
 [tool.vercel]
-entrypoint = "backend/main.py"
+entrypoint = "backend.main:app"
 
