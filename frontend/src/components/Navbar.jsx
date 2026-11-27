@@ -16,6 +16,8 @@ import {
   Activity,
   Github,
   ExternalLink,
+  Video,
+  Film,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { searchCities } from '../services/api';
@@ -45,6 +47,7 @@ export default function Navbar() {
     { id: 'lifestyle', label: 'Routine Planner', icon: Compass },
     { id: 'impact', label: 'Impact Tracker', icon: Award },
     { id: 'education', label: 'Pollutant Guide', icon: BookOpen },
+    { id: 'reel', label: 'Reel Mode', icon: Video, badge: 'NEW' },
   ];
 
   // Live search debounce

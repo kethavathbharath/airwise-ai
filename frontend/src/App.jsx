@@ -11,6 +11,7 @@ import LifestylePlannerPage from './pages/LifestylePlannerPage';
 import ImpactTrackerPage from './pages/ImpactTrackerPage';
 import EducationPage from './pages/EducationPage';
 import SettingsPage from './pages/SettingsPage';
+import ReelModePage from './pages/ReelModePage';
 import { AlertTriangle, X } from 'lucide-react';
 
 function MainLayout() {
@@ -68,6 +69,7 @@ function MainLayout() {
         {activeTab === 'impact' && <ImpactTrackerPage />}
         {activeTab === 'education' && <EducationPage />}
         {activeTab === 'settings' && <SettingsPage />}
+        {activeTab === 'reel' && <ReelModePage />}
       </main>
 
       <Footer />
