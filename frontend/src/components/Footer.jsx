@@ -1,5 +1,6 @@
 import React from 'react';
-import { Wind, Sparkles, ExternalLink, Github } from 'lucide-react';
+import { Wind, Sparkles, ExternalLink } from 'lucide-react';
+import GithubIcon from './GithubIcon';
 import { useApp } from '../context/AppContext';
 
 export default function Footer() {
@@ -99,7 +100,7 @@ export default function Footer() {
               rel="noopener noreferrer"
               className="text-slate-700 hover:text-slate-900 font-semibold inline-flex items-center space-x-1"
             >
-              <Github className="w-3 h-3 text-slate-600" />
+              <GithubIcon className="w-3 h-3 text-slate-600" />
               <span>GitHub Repo</span>
             </a>
           </div>

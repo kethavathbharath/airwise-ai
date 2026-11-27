@@ -14,11 +14,11 @@ import {
   Sparkles,
   ChevronDown,
   Activity,
-  Github,
   ExternalLink,
   Video,
   Film,
 } from 'lucide-react';
+import GithubIcon from './GithubIcon';
 import { useApp } from '../context/AppContext';
 import { searchCities } from '../services/api';
 
@@ -271,7 +271,7 @@ export default function Navbar() {
               title="GitHub: kethavathbharath/airwise-ai"
               aria-label="GitHub Repository"
             >
-              <Github className="w-4 h-4" />
+              <GithubIcon className="w-4 h-4" />
             </a>
 
             {/* Settings button */}

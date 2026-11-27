@@ -11,8 +11,8 @@ import {
   MapPin,
   ChevronRight,
   ExternalLink,
-  Github,
 } from 'lucide-react';
+import GithubIcon from '../components/GithubIcon';
 import { useApp } from '../context/AppContext';
 
 export default function LandingPage() {
@@ -81,7 +81,7 @@ export default function LandingPage() {
               rel="noopener noreferrer"
               className="px-4 py-3.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm border border-slate-300 hover:bg-slate-200 transition-all flex items-center space-x-2 shadow-xs hover:scale-[1.02]"
             >
-              <Github className="w-4 h-4" />
+              <GithubIcon className="w-4 h-4" />
               <span>GitHub Code</span>
             </a>
           </div>
