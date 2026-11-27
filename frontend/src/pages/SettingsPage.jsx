@@ -47,7 +47,7 @@ export default function SettingsPage() {
       const res = await handleSetGeminiKey(geminiKeyInput);
       setKeyMessage({ type: 'success', text: res.message || 'Key updated successfully.' });
       setGeminiKeyInput('');
-    } catch (err) {
+    } catch {
       setKeyMessage({ type: 'error', text: 'Failed to update Gemini API key.' });
     } finally {
       setKeySaving(false);

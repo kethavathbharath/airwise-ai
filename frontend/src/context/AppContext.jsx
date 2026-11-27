@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import {
   fetchAirQualityByCity,
@@ -191,13 +191,14 @@ export function AppProvider({ children }) {
   useEffect(() => {
     loadAirQuality(currentCity);
     checkConfig();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function checkConfig() {
     try {
       const status = await fetchConfigStatus();
       setConfigStatus(status);
-    } catch (e) {}
+    } catch {}
   }
 
   async function loadAirQuality(city) {
@@ -254,7 +255,7 @@ export function AppProvider({ children }) {
         try {
           await loadByCoordinates(pos.coords.latitude, pos.coords.longitude, 'My Location', 'India', '');
           setActiveTab('dashboard');
-        } catch (fallbackErr) {
+        } catch {
           await loadAirQuality('Hyderabad');
           setActiveTab('dashboard');
         }
@@ -286,7 +287,7 @@ export function AppProvider({ children }) {
     );
   }
 
-  function logSustainableAction(action) {
+  const logSustainableAction = useCallback((action) => {
     const newAction = {
       id: Date.now().toString(),
       title: action.title,
@@ -317,8 +318,8 @@ export function AppProvider({ children }) {
         spread: 60,
         origin: { y: 0.8 },
       });
-    } catch (e) {}
-  }
+    } catch {}
+  }, [impactStats]);
 
   function checkAchievements(totalCo2, actionsCount, tripsCount, category) {
     setAchievements((prev) =>
@@ -339,7 +340,7 @@ export function AppProvider({ children }) {
               spread: 80,
               origin: { y: 0.5 },
             });
-          } catch (e) {}
+          } catch {}
           return { ...ach, unlocked: true };
         }
         return ach;

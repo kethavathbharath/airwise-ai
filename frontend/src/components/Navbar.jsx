@@ -16,7 +16,6 @@ import {
   Activity,
   ExternalLink,
   Video,
-  Film,
 } from 'lucide-react';
 import GithubIcon from './GithubIcon';
 import { useApp } from '../context/AppContext';
@@ -53,8 +52,8 @@ export default function Navbar() {
   // Live search debounce
   useEffect(() => {
     if (!searchQuery.trim()) {
-      setSearchResults([]);
-      return;
+      const resetTimer = setTimeout(() => setSearchResults([]), 0);
+      return () => clearTimeout(resetTimer);
     }
     const timer = setTimeout(async () => {
       const results = await searchCities(searchQuery);

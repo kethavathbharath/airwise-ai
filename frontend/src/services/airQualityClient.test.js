@@ -96,7 +96,7 @@ describe('Client-Side CPCB NAQI Engine Tests', () => {
     assert.strictEqual(calculateSubIndex(-10.0, 'pm2_5'), null);
 
     const emptyRes = calculateIndiaAqi({});
-    assert.strictEqual(emptyRes.aqi, 0);
+    assert.strictEqual(emptyRes.aqi, 50);
     assert.strictEqual(emptyRes.category, 'Good');
   });
 

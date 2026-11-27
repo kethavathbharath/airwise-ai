@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Compass,
   Sun,
@@ -35,11 +35,7 @@ export default function LifestylePlannerPage() {
 
   const outdoorAqi = airQualityData?.india_aqi?.aqi || 165;
 
-  useEffect(() => {
-    loadPlan();
-  }, [currentCity, outdoorAqi, userProfile]);
-
-  async function loadPlan() {
+  const loadPlan = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetchDailyPlan(currentCity, outdoorAqi, userProfile);
@@ -49,7 +45,14 @@ export default function LifestylePlannerPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [currentCity, outdoorAqi, userProfile]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadPlan();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [loadPlan]);
 
   function handleCompleteAction(slotTitle, action) {
     if (completedSteps[action.title]) return;
@@ -88,6 +91,11 @@ export default function LifestylePlannerPage() {
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               Smart Low-Emission Routine Planner
             </h1>
+            {loading && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold animate-pulse">
+                Generating Plan...
+              </span>
+            )}
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
             A synchronized morning, afternoon, and evening routine engineered to minimize your family’s smog exposure

@@ -71,3 +71,21 @@ def test_null_and_negative_inputs():
     assert calculate_sub_index(-10.0, "pm2_5") is None
     assert calculate_sub_index(None, "pm2_5") is None
     assert calculate_sub_index(50.0, "unknown_pollutant") is None
+
+
+def test_extreme_concentrations_and_secondary_pollutants():
+    # Extreme PM2.5 > 500 ug/m3 caps at Severe 500
+    sub_pm25 = calculate_sub_index(800.0, "pm2_5")
+    assert sub_pm25 >= 401
+
+    # NO2 breakpoints (0-40 -> 0-50, 41-80 -> 51-100)
+    assert calculate_sub_index(20.0, "no2") == 25
+    assert calculate_sub_index(60.0, "no2") == 75
+
+    # SO2 breakpoints (0-40 -> 0-50, 41-80 -> 51-100)
+    assert calculate_sub_index(20.0, "so2") == 25
+    assert calculate_sub_index(60.0, "so2") == 75
+
+    # CO breakpoints (0-1.0 -> 0-50, 1.1-2.0 -> 51-100)
+    assert calculate_sub_index(0.5, "co") == 25
+    assert calculate_sub_index(1.5, "co") == 75

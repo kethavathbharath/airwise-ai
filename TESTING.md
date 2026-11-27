@@ -10,9 +10,9 @@
 The **AirWise AI** testing framework provides comprehensive test coverage spanning mathematical accuracy, API integrity, data sanitization, security policies, and performance latency.
 
 The test suite covers:
-- **Backend Test Suite (Pytest)**: 30 automated tests across API endpoints, CPCB formulas, security headers, input sanitization, and caching.
-- **Frontend Engine Test Suite (Node.js Test Runner)**: Unit tests for client-side CPCB sub-index formulas, category mapping, dominant pollutant selection, and edge case resilience.
-- **Unified Test Runner**: `run_all_tests.py` runs full verification with exit code guarantees.
+- **Backend Test Suite (Pytest)**: 34 automated tests across API endpoints, CPCB formulas, security headers, input sanitization, rate limiting, and caching.
+- **Frontend Engine Test Suite (Node.js Test Runner)**: 7 automated unit tests for client-side CPCB sub-index formulas, category mapping, dominant pollutant selection, and edge case resilience.
+- **Unified Test Runner**: `run_all_tests.py` runs full verification with exit code guarantees (41 total tests).
 
 ---
 

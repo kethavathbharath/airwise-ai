@@ -19,6 +19,11 @@ def test_owasp_security_headers_present():
     assert res.headers.get("X-XSS-Protection") == "1; mode=block"
     assert res.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
     assert "geolocation=(self)" in res.headers.get("Permissions-Policy", "")
+    assert "max-age=31536000" in res.headers.get("Strict-Transport-Security", "")
+    assert "default-src 'self'" in res.headers.get("Content-Security-Policy", "")
+    assert res.headers.get("Cross-Origin-Opener-Policy") == "same-origin"
+    assert res.headers.get("Cross-Origin-Resource-Policy") == "cross-origin"
+    assert res.headers.get("X-Permitted-Cross-Domain-Policies") == "none"
 
 
 def test_cors_origin_headers():
@@ -108,3 +113,35 @@ def test_prompt_injection_safety_in_ai_chat():
     assert "AIzaSy" not in reply
     assert "sk-" not in reply
     assert "SECRET" not in reply
+
+
+def test_rate_limiting_middleware_rejects_excessive_traffic():
+    # Verify sliding window rate limiter triggers 429 when max_requests exceeded
+    isolated_test_ip = "198.51.100.42"
+    headers = {"x-forwarded-for": isolated_test_ip}
+    # Send rapid requests until 429 is encountered
+    status_codes = []
+    for _ in range(125):
+        r = client.get("/health", headers=headers)
+        status_codes.append(r.status_code)
+        if r.status_code == 429:
+            break
+    assert 429 in status_codes
+
+
+def test_boundary_coordinates_validation():
+    # Boundary valid points: (0, 0), (90, 180), (-90, -180)
+    res = client.get("/api/v1/air-quality/coords?lat=0.0&lon=0.0")
+    assert res.status_code == 200
+
+    # Non-numeric coordinate string handling
+    res = client.get("/api/v1/air-quality/coords?lat=invalid&lon=77.2")
+    assert res.status_code == 422
+
+
+def test_empty_ai_chat_messages_handling():
+    res = client.post(
+        "/api/v1/ai/chat",
+        json={"messages": [], "location": "Delhi", "current_aqi": 120},
+    )
+    assert res.status_code in [200, 422]

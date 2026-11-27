@@ -82,7 +82,7 @@ export default function Footer() {
 
         <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-3">
           <div className="flex flex-wrap items-center gap-3">
-            <span>&copy; {new Date().getFullYear()} AirWise AI – GenAI Urban Air Quality Assistant.</span>
+            <span>&copy; 2026 AirWise AI – GenAI Urban Air Quality Assistant.</span>
             <span className="text-slate-300">•</span>
             <a
               href="https://airwise-ai-nufu.vercel.app/"

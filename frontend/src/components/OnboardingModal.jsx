@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Sparkles, Home, Check } from 'lucide-react';
+import { Sparkles, Check } from 'lucide-react';
 
 const CITIES = ['Hyderabad', 'Delhi', 'Mumbai', 'Bengaluru', 'Pune', 'Kolkata', 'Chennai', 'Lucknow', 'Ahmedabad', 'Jaipur'];
 const TRANSIT_OPTIONS = ['Two-Wheeler / Bike', 'Metro Rail', 'City Bus', 'Car / Cab', 'Walking / Bicycle'];

@@ -17,7 +17,7 @@ export async function fetchHealth() {
   try {
     const res = await fetch('/health');
     if (res.ok) return await res.json();
-  } catch (err) {}
+  } catch {}
   return { status: 'healthy', mode: 'intelligent_client', service: 'AirWise AI Web App' };
 }
 
@@ -33,7 +33,7 @@ export async function fetchConfigStatus() {
       }
       return data;
     }
-  } catch (err) {}
+  } catch {}
 
   return {
     gemini_configured: Boolean(localKey),
@@ -57,7 +57,7 @@ export async function updateGeminiApiKey(key) {
       body: JSON.stringify({ key: cleanKey }),
     });
     if (res.ok) return await res.json();
-  } catch (err) {}
+  } catch {}
 
   return {
     success: true,
@@ -73,7 +73,7 @@ export async function searchCities(query) {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) return data;
     }
-  } catch (err) {}
+  } catch {}
 
   // Fallback to direct client-side Open-Meteo Geocoding
   return await searchCitiesDirect(query);
@@ -85,7 +85,7 @@ export async function fetchAirQualityByCity(city) {
     if (res.ok) {
       return await res.json();
     }
-  } catch (err) {}
+  } catch {}
 
   // Fallback: Resolve coordinates and fetch Open-Meteo directly from browser
   const cities = await searchCitiesDirect(city);
@@ -107,7 +107,7 @@ export async function fetchAirQualityByCoords(lat, lon, cityName, country, regio
     if (res.ok) {
       return await res.json();
     }
-  } catch (err) {}
+  } catch {}
 
   // Direct client fetch
   return await fetchLiveAirQualityDirect(lat, lon, cityName, country, region);
@@ -132,7 +132,7 @@ export async function sendChatMessage(messages, location, currentAqi, pollutants
       }),
     });
     if (res.ok) return await res.json();
-  } catch (err) {}
+  } catch {}
 
   // If local Gemini key is set, call Gemini API directly from browser
   if (localKey) {
@@ -252,7 +252,7 @@ export async function fetchDailyPlan(location, aqi, userProfile) {
       body: JSON.stringify({ location, aqi, user_profile: userProfile }),
     });
     if (res.ok) return await res.json();
-  } catch (err) {}
+  } catch {}
 
   // Client-side fallback routine generator
   const transit = userProfile?.transport_method || 'Bike';
@@ -320,7 +320,7 @@ export async function fetchIndoorAdvice(homeSize, occupants, ventilationType, ha
       }),
     });
     if (res.ok) return await res.json();
-  } catch (err) {}
+  } catch {}
 
   const aqi = Number(outdoorAqi) || 160;
   return {

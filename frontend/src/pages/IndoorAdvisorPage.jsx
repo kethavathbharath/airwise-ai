@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Home,
   Wind,
@@ -13,7 +13,7 @@ import { useApp } from '../context/AppContext';
 import { fetchIndoorAdvice } from '../services/api';
 
 export default function IndoorAdvisorPage() {
-  const { currentCity, airQualityData, userProfile, setUserProfile } = useApp();
+  const { airQualityData, userProfile } = useApp();
 
   const [homeSize, setHomeSize] = useState(userProfile?.home_size || '2 BHK (800-1200 sq ft)');
   const [occupants, setOccupants] = useState(userProfile?.occupants || 3);
@@ -25,11 +25,7 @@ export default function IndoorAdvisorPage() {
 
   const outdoorAqi = airQualityData?.india_aqi?.aqi || 165;
 
-  useEffect(() => {
-    loadAdvice();
-  }, [homeSize, occupants, ventilationType, hasPurifier, outdoorAqi]);
-
-  async function loadAdvice() {
+  const loadAdvice = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetchIndoorAdvice(homeSize, occupants, ventilationType, hasPurifier, outdoorAqi);
@@ -39,7 +35,14 @@ export default function IndoorAdvisorPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [homeSize, occupants, ventilationType, hasPurifier, outdoorAqi]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadAdvice();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [loadAdvice]);
 
   return (
     <div className="space-y-8 pb-16">
@@ -52,6 +55,11 @@ export default function IndoorAdvisorPage() {
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
             Indoor Air Quality Sanctuary Advisor
           </h1>
+          {loading && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold animate-pulse">
+              Calibrating...
+            </span>
+          )}
         </div>
         <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
           During winter inversions, indoor PM2.5 can reach 70% of street levels without active protection.

@@ -1,13 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin,
   Bot,
   Smartphone,
-  BarChart2,
-  Leaf,
-  Award,
-  Sparkles,
   Play,
   Pause,
   SkipBack,
@@ -455,9 +451,8 @@ function Scene3_LiveAQI({ progress, airQualityData, isActive }) {
   );
 }
 
-function Scene4_AIAssistant({ progress, airQualityData, isActive }) {
+function Scene4_AIAssistant({ progress, _airQualityData, isActive }) {
   const chatProgress = Math.min(1, progress * 1.2);
-  const typingProgress = Math.max(0, (progress - 0.3) / 0.4);
   const responseProgress = Math.max(0, (progress - 0.5) / 0.5);
 
   const messages = [
@@ -808,36 +803,36 @@ function ImpactCounter({ label, value, unit, icon, iconColor, color, delay }) {
   );
 }
 
+const INITIAL_NETWORK_NODES = Array.from({ length: 12 }, (_, i) => {
+  const angle = (i / 12) * Math.PI * 2;
+  const radius = 60 + ((i * 17) % 40);
+  return {
+    id: i,
+    x: 160 + Math.cos(angle) * radius,
+    y: 80 + Math.sin(angle) * radius,
+    angle,
+    radius,
+    speed: 0.0005 + ((i * 7) % 10) * 0.0001,
+    color: ['#10b981', '#06b6d4', '#8b5cf6', '#f59e0b', '#ec4899'][i % 5],
+  };
+});
+
 function CommunityNetwork() {
-  const nodes = useRef([]);
-  const [positions, setPositions] = useState([]);
+  const [networkNodes, setNetworkNodes] = useState(INITIAL_NETWORK_NODES);
 
   useEffect(() => {
-    const newNodes = Array.from({ length: 12 }, (_, i) => {
-      const angle = (i / 12) * Math.PI * 2;
-      const radius = 60 + Math.random() * 40;
-      return {
-        id: i,
-        x: 160 + Math.cos(angle) * radius,
-        y: 80 + Math.sin(angle) * radius,
-        angle,
-        radius,
-        speed: 0.0005 + Math.random() * 0.001,
-        color: ['#10b981', '#06b6d4', '#8b5cf6', '#f59e0b', '#ec4899'][Math.floor(Math.random() * 5)],
-      };
-    });
-    nodes.current = newNodes;
-    setPositions(newNodes.map(n => ({ x: n.x, y: n.y })));
-
     const interval = setInterval(() => {
-      setPositions(prev => prev.map((p, i) => {
-        const n = nodes.current[i];
-        n.angle += n.speed;
-        return {
-          x: 160 + Math.cos(n.angle) * n.radius,
-          y: 80 + Math.sin(n.angle) * n.radius,
-        };
-      }));
+      setNetworkNodes((prev) =>
+        prev.map((n) => {
+          const nextAngle = n.angle + n.speed;
+          return {
+            ...n,
+            angle: nextAngle,
+            x: 160 + Math.cos(nextAngle) * n.radius,
+            y: 80 + Math.sin(nextAngle) * n.radius,
+          };
+        })
+      );
     }, 50);
 
     return () => clearInterval(interval);
@@ -851,11 +846,11 @@ function CommunityNetwork() {
           <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
         </radialGradient>
       </defs>
-      {positions.map((p, i) => (
+      {networkNodes.map((p, i) => (
         <g key={i}>
-          {nodes.current.map((n, j) => {
+          {networkNodes.map((n, j) => {
             if (j <= i) return null;
-            const p2 = positions[j];
+            const p2 = networkNodes[j];
             if (!p2) return null;
             const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
             if (dist > 100) return null;
@@ -872,7 +867,7 @@ function CommunityNetwork() {
           })}
         </g>
       ))}
-      {positions.map((p, i) => (
+      {networkNodes.map((p, i) => (
         <g key={i}>
           <circle
             cx={p.x} cy={p.y} r={20}
@@ -882,7 +877,7 @@ function CommunityNetwork() {
           />
           <circle
             cx={p.x} cy={p.y} r={6}
-            fill={nodes.current[i]?.color}
+            fill={p.color}
             filter="drop-shadow(0 0 4px currentColor)"
           />
         </g>
@@ -1014,38 +1009,41 @@ export default function ReelModePage() {
   const startTimeRef = useRef(null);
   const animationRef = useRef(null);
   const containerRef = useRef(null);
+  const progressRef = useRef(progress);
 
   useEffect(() => {
-    if (isPlaying) {
-      startTimeRef.current = Date.now() - (progress / 100) * TOTAL_DURATION * 1000;
-      animate();
-    } else if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-    }
-    return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
-    };
-  }, [isPlaying]);
+    progressRef.current = progress;
+  }, [progress]);
 
-  const animate = () => {
+  const animate = useCallback(function tick() {
     if (!isPlaying) return;
     const elapsed = (Date.now() - startTimeRef.current) / 1000;
     const newProgress = Math.min((elapsed / TOTAL_DURATION) * 100, 100);
     setProgress(newProgress);
 
     const sceneIndex = Math.min(Math.floor((newProgress / 100) * sceneConfig.length), sceneConfig.length - 1);
-    if (sceneIndex !== currentScene) {
-      setCurrentScene(sceneIndex);
-    }
+    setCurrentScene(sceneIndex);
 
     if (newProgress >= 100) {
       setIsPlaying(false);
       setProgress(0);
       setCurrentScene(0);
     } else {
-      animationRef.current = requestAnimationFrame(animate);
+      animationRef.current = requestAnimationFrame(tick);
     }
-  };
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (isPlaying) {
+      startTimeRef.current = Date.now() - (progressRef.current / 100) * TOTAL_DURATION * 1000;
+      animationRef.current = requestAnimationFrame(animate);
+    } else if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    };
+  }, [isPlaying, animate]);
 
   const togglePlay = () => {
     setIsPlaying(!isPlaying);
@@ -1105,13 +1103,21 @@ export default function ReelModePage() {
     }
   };
 
+  const handleKeyDownRef = useRef(handleKeyDown);
   useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('fullscreenchange', () => {
+    handleKeyDownRef.current = handleKeyDown;
+  });
+
+  useEffect(() => {
+    const onKey = (e) => handleKeyDownRef.current(e);
+    window.addEventListener('keydown', onKey);
+    const onFsChange = () => {
       if (!document.fullscreenElement) setIsFullscreen(false);
-    });
+    };
+    document.addEventListener('fullscreenchange', onFsChange);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', onKey);
+      document.removeEventListener('fullscreenchange', onFsChange);
     };
   }, []);
 
