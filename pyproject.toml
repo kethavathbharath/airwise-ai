@@ -35,3 +35,7 @@ ignore = ["E501", "B008"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[tool.vercel]
+entrypoint = "backend/main.py"
+
